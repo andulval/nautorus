@@ -62,6 +62,14 @@ const userSchema = new mongoose.Schema(
   //   },
 );
 
+userSchema.pre('save', async function (next) {
+  //run before every User.save() call
+  if (!this.isModified('password') || this.isNew) return next(); //if not modified or new user is creating - do nothing
+
+  this.passwordChangedAt = Date.now() - 1000; //minus 1 ssecond because: //sometimes issue JWT is shorter than saving to DB, which could case problem with login user after reset token (changedPasswordAfter)
+  next();
+});
+
 //MONGOOSE middlewares
 userSchema.pre('save', async function (next) {
   //console.log('in pre userChema');
@@ -83,7 +91,8 @@ userSchema.methods.correctPassword = async function (
   return await bcrypt.compare(candidatePassword, userPassword);
 };
 
-userSchema.methods.changedPasswordAfter = async function (
+userSchema.methods.changedPasswordAfter = function (
+  //! tu dałem async i wyrzucło bład .. bo return promise w pending stanie ajko ze przy wywołaniu funkcji nie bylo await
   JWTtimestamp, //from token - iat - issue at
 ) {
   if (this.passwordChangedAt) {
@@ -92,9 +101,13 @@ userSchema.methods.changedPasswordAfter = async function (
       this.passwordChangedAt.getTime() / 1000,
       10,
     );
+    // console.log('changedPasswordAfter', JWTtimestamp, secondsPasswordChangedAt);
     return JWTtimestamp < secondsPasswordChangedAt; //if paassword was changedafter token was created - so now we should ask to generate new token, no use old one which isnt correct bacuse user has difffrent credentail (beacuse eq stolen password and user change it)
   }
-
+  //   console.log(
+  //     'changedPasswordAfter passwordChangedAt negative',
+  //     this.passwordChangedAt,
+  //   );
   //false meant not changed
   return false;
 };
@@ -107,27 +120,25 @@ userSchema.methods.createPasswordResetToken = function () {
     .update(resetToken)
     .digest('hex');
 
-  this.passwordResetExpired = Date.now() + 10 * 60 * 1000; //10 minutes
+  this.passwordResetExpires = Date.now() + 10 * 60 * 1000; //10 minutes
 
   return resetToken;
 };
 
-userSchema.methods.changedPasswordWithin10min = async function (
- //!    
-  ) {
-    if (this.passwordChangedAt) {
-      //some users can doesnt have this parameter in DB - never changed etc - so we test it here
-      const secondsPasswordChangedAt = parseInt(
-        this.passwordChangedAt.getTime() / 1000,
-        10,
-      );
-      return JWTtimestamp < secondsPasswordChangedAt; //if paassword was changedafter token was created - so now we should ask to generate new token, no use old one which isnt correct bacuse user has difffrent credentail (beacuse eq stolen password and user change it)
-    }
-  
-    //false meant not changed
-    return false;
-  };
+userSchema.methods.changedPasswordWithin10min = async function () //!
+{
+  if (this.passwordChangedAt) {
+    //some users can doesnt have this parameter in DB - never changed etc - so we test it here
+    const secondsPasswordChangedAt = parseInt(
+      this.passwordChangedAt.getTime() / 1000,
+      10,
+    );
+    return JWTtimestamp < secondsPasswordChangedAt; //if paassword was changedafter token was created - so now we should ask to generate new token, no use old one which isnt correct bacuse user has difffrent credentail (beacuse eq stolen password and user change it)
+  }
 
+  //false meant not changed
+  return false;
+};
 
 //QUERY MIDDLEWARE
 // tourSchema.pre(/^find/, (next) => {
