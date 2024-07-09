@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const slugify = require('slugify');
 // const validator = require('validator');
+const User = require('./userModel');
 
 const tourSchema = new mongoose.Schema(
   {
@@ -70,6 +71,38 @@ const tourSchema = new mongoose.Schema(
       select: false, //pernamently hide this parameter - no send to client, hided
     },
     startDates: [Date],
+    secretTour: {
+      type: Boolean,
+      default: false,
+    },
+    startLocation: {
+      // just casual data of the Model, without id's on creation
+      //GeoJSON
+      type: {
+        type: String,
+        default: 'Point',
+        enum: ['Point'], //only points available
+      },
+      coordinates: [Number],
+      adress: String,
+      description: String,
+    },
+    locations: [
+      //embended data - in mongoose it is simply array of object. Moongose will create Id's for each of this
+      {
+        //GeoJSON
+        type: {
+          type: String,
+          default: 'Point',
+          enum: ['Point'], //only points available
+        },
+        coordinates: [Number],
+        adress: String,
+        description: String,
+        day: Number,
+      },
+    ],
+    guides: Array,
   },
   {
     toJSON: {
@@ -94,6 +127,18 @@ tourSchema.pre('save', function (next) {
   //NOT before insertMany()
   //this keywors refers to current processing document
   this.slug = slugify(this.name, { lower: true });
+  next();
+});
+tourSchema.pre('save', function (next) {
+  //*populate tour by referencing id's of users which are leads of this tour
+  //document middlaware:
+  //runs before .save() and . .create()
+  //NOT before insertMany()
+  //this keywors refers to current processing document
+
+  const guides = this.guides.map(async id => await User.findById(id))
+
+  this.guides = guides
   next();
 });
 
