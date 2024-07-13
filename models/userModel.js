@@ -56,15 +56,22 @@ const userSchema = new mongoose.Schema(
       default: true,
       select: false,
     },
+    //!no, beacuse we use virtuals populate to not store potencial big array here.
+    // reviews: [
+    //     {
+    //       type: mongoose.Schema.ObjectId,
+    //       ref: 'Review',
+    //     },
+    //   ],
   },
-  //   {
-  //     toJSON: {
-  //       virtuals: true,
-  //     },
-  //     toObject: {
-  //       virtuals: true,
-  //     },
-  //   },
+  {
+    toJSON: {
+      virtuals: true, //we want show virtuals - fields NOT stored in a DB, but calculated some other values
+    },
+    toObject: {
+      virtuals: true, //we want show virtuals - fields NOT stored in a DB, but calculated some other values
+    },
+  },
 );
 
 userSchema.pre('save', async function (next) {
@@ -91,9 +98,20 @@ userSchema.pre('save', async function (next) {
 userSchema.pre(/^find/, function (next) {
   //findOne, findOneAndUpdate etc..
   //.this. points to the current query
-  this.find({ active: { $ne: false } });
+  this.find({ active: { $ne: false } }); //not show deleted/frozen Users
   next();
 });
+
+// userSchema.pre(/^find/, function (next) {
+//   //document middlaware:
+//   //runs before .any route starts with find -> eg findById
+//   //NOT before insertMany()
+//   //this keywors refers to current processing document
+//   this.populate({
+//     path: 'reviews',
+//   }); //populate = fill up guides field 9in this case Users from UserModel
+//   next();
+// });
 
 //INSTANCE method - available for all documents of user collection eg. user.correctPassword(...) witout export it
 userSchema.methods.correctPassword = async function (

@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const slugify = require('slugify');
 // const validator = require('validator');
-const User = require('./userModel');
+// const User = require('./userModel');
 
 const tourSchema = new mongoose.Schema(
   {
@@ -102,14 +102,26 @@ const tourSchema = new mongoose.Schema(
         day: Number,
       },
     ],
-    guides: Array,
+    guides: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: 'User',
+      },
+    ],
+    //!no, beacuse we use virtuals populate to not store potencial big array here.
+    // reviews: [
+    //     {
+    //       type: mongoose.Schema.ObjectId,
+    //       ref: 'Review',
+    //     },
+    //   ],
   },
   {
     toJSON: {
-      virtuals: true,
+      virtuals: true, //we want show virtuals - fields NOT stored in a DB, but calculated some other values
     },
     toObject: {
-      virtuals: true,
+      virtuals: true, //we want show virtuals - fields NOT stored in a DB, but calculated some other values
     },
   },
 );
@@ -118,6 +130,13 @@ const tourSchema = new mongoose.Schema(
 tourSchema.virtual('durationWeeks').get(function () {
   //normal function beacuse we are using THIS keyword in this function
   return this.duration / 7;
+});
+
+//virtual popualate
+tourSchema.virtual('reviews', {
+  ref: 'Review',
+  foreignField: 'tour', //field in (ref' Review), field in other model - here in Review, where mongoose need to search (we have there ids of tours)
+  localField: '_id', //where id is stored in the current model. Because mongoose need to know what parameter serach for in Review's tour field. It could be insted of _id sth diffrent, eg in reviewModel we could store
 });
 
 //MONGOOSE middlewares
@@ -129,25 +148,41 @@ tourSchema.pre('save', function (next) {
   this.slug = slugify(this.name, { lower: true });
   next();
 });
-tourSchema.pre('save', function (next) {
-  //*populate tour by referencing id's of users which are leads of this tour
+tourSchema.pre(/^find/, function (next) {
   //document middlaware:
-  //runs before .save() and . .create()
+  //runs before .any route starts with find -> eg findById
   //NOT before insertMany()
   //this keywors refers to current processing document
-
-  const guides = this.guides.map(async id => await User.findById(id))
-
-  this.guides = guides
+  this.populate({
+    path: 'guides',
+    select: '-__v -passwordChangetAt',
+  });
+  //   .populate({
+  //     path: 'reviews',
+  //     select: '-__v -user -tour',
+  //   }); //populate = fill up guides field 9in this case Users from UserModel
   next();
 });
+
+// tourSchema.pre('save', async function (next) {
+//     //! guides Users embeded in tour Model. Example! This approuch isnt best here, beacuse if user change eg role we need fin all referenced tours and upadte it
+//   //*populate tour by referencing id's of users which are leads of this tour
+//   //document middlaware:
+//   //runs before .save() and . .create()
+//   //NOT before insertMany()
+//   //this keywors refers to current processing document
+
+//   const guidesPromises = this.guides.map((id) => User.findById(id));
+//   this.guides = await Promise.all(guidesPromises);
+//   next();
+// });
 
 //QUERY MIDDLEWARE
-tourSchema.pre(/^find/, (next) => {
-  //RegExp -> all strings that starts with 'find'
-  //   this.find({ secretTour: { $ne: true } });
-  next();
-});
+// tourSchema.pre(/^find/, (next) => {
+//   //RegExp -> all strings that starts with 'find'
+//   //   this.find({ secretTour: { $ne: true } });
+//   next();
+// });
 
 const Tour = mongoose.model('Tour', tourSchema);
 module.exports = Tour;

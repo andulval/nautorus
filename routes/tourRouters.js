@@ -13,6 +13,7 @@ const {
   //   checkBodyTour,
 } = require('../controllers/tourController');
 const { protect, restrictTo } = require('../controllers/authController');
+const { createReview } = require('../controllers/reviewController');
 
 // router.param('id', checkID); //midlleware to check if we are out of range of id - if so abort next middlewares
 router.route('/top-5-cheap').get(aliasTopTours, getAllTours);
@@ -26,5 +27,9 @@ router
   .get(getTour)
   .patch(updateTour)
   .delete(protect, restrictTo('admin', 'lead-guide'), removeTour);
+
+router
+  .route('/:tourId/reviews')
+  .post(protect, restrictTo('user'), createReview);
 
 module.exports = router;

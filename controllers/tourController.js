@@ -140,7 +140,12 @@ exports.getTour = catchAsync(async (req, res, next) => {
   // const selectedTour = tours.find((tour) => tour.id === parseInt(id));
 
   const { id } = req.params;
-  const tour = await Tour.findById(id);
+  const tour = await Tour.findById(id).populate('reviews');
+  //! nie ma populate bo przeniesione do pre middleware aby nie powielac kodu
+  //    .populate({
+  //     path: 'guides',
+  //     select: '-__v -passwordChangetAt',
+  //   }); //populate = fill up guides field 9in this case Users from UserModel
 
   if (!tour) {
     //when wrong id, but mongoose return null (correct format of ID)
