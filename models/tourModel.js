@@ -36,6 +36,7 @@ const tourSchema = new mongoose.Schema(
       default: 4.5,
       min: [1, 'Rating must be above 1'],
       max: [5, 'Rating must be below 5'],
+      set: (val) => Math.round(val * 10) / 10, //set rrun this fucntion after any changes happen to this value
     },
     ratingsQuantity: {
       type: Number,
@@ -125,6 +126,9 @@ const tourSchema = new mongoose.Schema(
     },
   },
 );
+tourSchema.index({ price: 1, ratingsAverage: -1 }); //! indexing is method that in mongoDB has array of values - eg _id indexes are automatic createdd and mongoDB start scan first this array of inexed _id's and then whole documents (which is much slower). When provided more fields it will be also combained togeher as solo too
+tourSchema.index({ slag: 1 }); //! indexing is method that in mongoDB has array of values - eg _id indexes are automatic createdd and mongoDB start scan first this array of inexed _id's and then whole documents (which is much slower). When provided more fields it will be also combained togeher as solo too
+tourSchema.index({ startLocation: '2dsphere' }); //! indexing is method that in mongoDB has array of values - eg _id indexes are automatic createdd and mongoDB start scan first this array of inexed _id's and then whole documents (which is much slower). When provided more fields it will be also combained togeher as solo too
 
 //this propertis arent save to db, eq we have days an we can caluate it to weeks
 tourSchema.virtual('durationWeeks').get(function () {

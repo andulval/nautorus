@@ -31,7 +31,7 @@ const sendErrorProd = (err, res) => {
 
 const handleCastErrorDB = (err) => {
   const message = `Invalid ${err.path}: ${err.value}`;
-  console.log('handleCastErrorDB', message);
+//   console.log('handleCastErrorDB', message);
   return new AppError(message, 400); //bad request
 };
 const handleTokenError = () =>
@@ -45,7 +45,7 @@ const handleDuplicateFieldsDB = (err) => {
   //   console.log(err);
   //   const value = err.errmsg.match(/(["'])(?:\\.|[^\\])*?\1/); //select phrase between quotes
   const message = `Duplicate field value: ${name}. please use another value.`;
-  console.log('handleDuplicateFieldsDB', message);
+//   console.log('handleDuplicateFieldsDB', message);
   return new AppError(message, 400); //bad request
 };
 const handleValidationErrorDB = (err) => {
@@ -64,11 +64,11 @@ module.exports = (err, req, res, next) => {
     sendErrorDev(err, res);
   } else if (process.env.NODE_ENV === 'production') {
     let error = { ...err, name: err.name }; //to create copy
-    console.log('process.env.NODE_ENV === production', process.env.NODE_ENV);
+    // console.log('process.env.NODE_ENV === production', process.env.NODE_ENV);
     // console.log('err', error.name);
     // console.log(error);
-    console.log('error.code', error.code);
-    console.log('error.name', error.name);
+    // console.log('error.code', error.code);
+    // console.log('error.name', error.name);
     if (error.name === 'CastError') {
       error = handleCastErrorDB(error);
     }

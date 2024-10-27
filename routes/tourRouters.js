@@ -10,7 +10,8 @@ const {
   getMonthPlan,
   updateTour,
   removeTour,
-  //   checkBodyTour,
+  getToursWithin,
+  getDistances,
 } = require('../controllers/tourController');
 const { protect, restrictTo } = require('../controllers/authController');
 const reviewRouter = require('./reviewRouters');
@@ -21,13 +22,24 @@ router.use('/:tourId/reviews', reviewRouter); //in this case use nested routes. 
 router.route('/top-5-cheap').get(aliasTopTours, getAllTours);
 
 router.route('/tour-stats').get(getToursStats);
-router.route('/month-plan/:year').get(getMonthPlan);
+router
+  .route('/month-plan/:year')
+  .get(protect, restrictTo('admin', 'lead-guide', 'guide'), getMonthPlan);
 
-router.route('/').get(protect, getAllTours).post(createTour);
+//Geo routes - distancess and near locations
+router
+  .route('/tours-within/:distance/center/:latlng/unit/:unit')
+  .get(getToursWithin);
+router.route('/distances/:latlng/unit/:unit').get(getDistances);
+
+router
+  .route('/')
+  .get(getAllTours)
+  .post(protect, restrictTo('admin', 'lead-guide'), createTour);
 router
   .route('/:id')
   .get(getTour)
-  .patch(updateTour)
+  .patch(protect, restrictTo('admin', 'lead-guide'), updateTour)
   .delete(protect, restrictTo('admin', 'lead-guide'), removeTour);
 
 // router

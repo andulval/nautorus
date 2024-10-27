@@ -1,3 +1,5 @@
+//!!! for Netfliy - this file is not needed, but changed and moved to netflify/functions directory
+
 const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 

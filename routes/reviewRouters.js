@@ -5,21 +5,24 @@ const router = express.Router({ mergeParams: true }); //to allow this route to a
 const {
   createReview,
   getAllReviews,
-  getAllReviews,
   deleteReview,
   updateReview,
   getReview,
+  setTourAndUserIds,
 } = require('../controllers/reviewController');
 const { protect, restrictTo } = require('../controllers/authController');
+
+//! from this point all routes need auth, so we can have here middleware which starts from here and protect ALL futher routes
+router.use(protect);
 
 router
   .route('/')
   .get(getAllReviews)
-  .post(protect, restrictTo('user'), setTourAndUserIds, createReview);
+  .post(restrictTo('user'), setTourAndUserIds, createReview);
 
 router
   .route('/:id')
   .get(getReview)
-  .delete(protect, restrictTo('user'), deleteReview)
-  .patch(protect, updateReview);
+  .delete(restrictTo('user', 'admin'), deleteReview)
+  .patch(restrictTo('user', 'admin'), updateReview);
 module.exports = router;

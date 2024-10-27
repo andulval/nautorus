@@ -10,6 +10,7 @@ const helmet = require('helmet');
 const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
 const hpp = require('hpp');
+const compression = require('compression')
 
 const app = express();
 
@@ -19,13 +20,13 @@ const app = express();
 //set security HTTP Headers *first!
 app.use(helmet());
 
-if (process.env.NODE_ENV === 'development') {
-  //sth ontly in production - eg middlaware
-}
+// if (process.env.NODE_ENV === 'development') {
+//   //sth ontly in production - eg middlaware
+// }
 
 //Limt requests from 1 IP
 const limiter = rateLimit({
-  max: 100,
+  max: 500,
   windowMs: 60 * 60 * 1000,
   message: 'Too many request from this IP. Please try again in an hour.',
 });
@@ -53,6 +54,8 @@ app.use(
     ],
   }),
 ); // allow duplicate some fields
+
+app.use(compression()); //compress all the text sent to client (no working with images)
 
 //serving static files
 //! 3 - ROUTES - RESTfull api

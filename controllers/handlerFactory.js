@@ -81,13 +81,13 @@ exports.getAll = (Model) =>
       filterObj = { tour: req.params.tourId };
     }
 
-    const features = new APIFeatures(Tour.find(), req.query)
+    const features = new APIFeatures(Model.find(), req.query)
       .filter()
       .limitFields()
       .paginate()
       .sort(); // the chanining works beacuse in calss we return this - so return object on wichich we have this methods and we can chaining
     //3 - EXECUTE query
-    const doc = await features.query;
+    const doc = await features.query; //* .explain() -> in response we will have additional dadta
     // console.log('allTours', allTours);
 
     res.status(200).json({
