@@ -2,8 +2,8 @@
   functions = "netlify/functions"
   command = "npm install && echo Building Functions"
 [functions]
-  external_node_modules = ["express"]
-  node_bundler = "esbuild"
+  external_node_modules = ["express", "mongoose", "dotenv"] # Include any other necessary modules
+  node_bundler = "esbuild" # Ensure you use esbuild for better performance
 [[redirects]]
   force = true
   from = "/api/*"
