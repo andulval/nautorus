@@ -1,9 +1,9 @@
-// const dotenv = require('dotenv');
 const mongoose = require('mongoose');
+const dotenv = require('dotenv');
 const serverless = require('serverless-http');
 const express = require('express');
 
-// dotenv.config({ path: './config.env' });
+dotenv.config({ path: './config.env' });
 
 // Database connection
 const DB = process.env.DATABASE.replace(
@@ -23,7 +23,7 @@ mongoose
   });
 
 // Import Express app
-const app = require('./app'); // make sure './app' exports an express instance
+const app = require('../app'); // make sure './app' exports an express instance
 
 // Error handling adjustments for serverless environment
 process.on('uncaughtException', (err) => {
