@@ -23,7 +23,7 @@ mongoose
   });
 
 // Import Express app
-const app = require('../app'); // make sure './app' exports an express instance
+const app = require('../../app'); // make sure './app' exports an express instance
 
 // Error handling adjustments for serverless environment
 process.on('uncaughtException', (err) => {
