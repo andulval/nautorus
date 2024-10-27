@@ -1,9 +1,9 @@
-const dotenv = require('dotenv');
+// const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const serverless = require('serverless-http');
 const express = require('express');
 
-dotenv.config({ path: './config.env' });
+// dotenv.config({ path: './config.env' });
 
 // Database connection
 const DB = process.env.DATABASE.replace(

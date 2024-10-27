@@ -2,3 +2,5 @@
 *.env
 .cache
 config.env
+# Local Netlify folder
+.netlify
