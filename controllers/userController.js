@@ -13,6 +13,11 @@ const filteredObj = (body, ...allowedFilters) => {
   return result;
 };
 
+exports.getMe = (req, res, next) => {
+  req.params.id = req.user.id; //middleware needed for generic handler factory function of getMe - for user we have id in authentication protect middleware no in params query like otthers
+  next();
+};
+
 exports.deleteMe = catchAsync(async (req, res, next) => {
   await User.findByIdAndUpdate(req.user.id, { active: false });
   res.status(204).json({ status: 'success', data: null });
@@ -25,7 +30,7 @@ exports.createUser = (req, res) => {
   });
 };
 
-//! DO NOT updadte passwords with this - findByIdAndUpdate dosent trun safe middlewares!
+//! DO NOT updadte passwords with this - findByIdAndUpdate does NOT run safe middlewares!
 exports.deleteUser = handleFactory.deleteOne(User);
 // exports.updateUserData = handleFactory.updateOne(User); //! below code is quite diffreent so I decide that it will be diffrent that in  the course
 exports.updateUserData = catchAsync(async (req, res, next) => {

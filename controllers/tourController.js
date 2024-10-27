@@ -1,4 +1,5 @@
 // const fs = require('fs');
+const { json } = require('express');
 const Tour = require('../models/tourModel');
 
 const AppError = require('../utils/appError');
@@ -285,3 +286,76 @@ exports.getAllTours = handleFactory.getAll(Tour);
 //       data: { tours: allTours },
 //     });
 //   });
+
+// /tours-within/:distance/center/:latlng/unit/:unit
+// /tours-within/50/center/-40.1231232,45.4324423/unit/mi
+exports.getToursWithin = catchAsync(async (req, res, next) => {
+  const { distance, latlng, unit } = req.params;
+  const [latitude, longitude] = latlng.split(',');
+  const radius = unit === 'mi' ? distance / 3963.2 : distance / 6378.1; //required distance in radiance - from daius of distance
+  if (!latitude || !longitude) {
+    next(
+      new AppError(
+        'Pleasse provide latitude and longitude in format: latitude,longitude => e.g. -40.1231232,45.4324423',
+        400,
+      ),
+    );
+  }
+
+  const tours = await Tour.find({
+    startLocation: {
+      $geoWithin: { $centerSphere: [[longitude, latitude], radius] },
+    },
+  }); //! required indexes to work, in tourModel -> field startLocation need have indexes (tourSchema.index(...)
+
+  // /.parseFloat();
+  res.status(200).json({
+    status: 'success',
+    results: tours.length,
+
+    data: tours,
+  });
+});
+
+exports.getDistances = catchAsync(async (req, res, next) => {
+  const { latlng, unit } = req.params;
+  const [latitude, longitude] = latlng.split(',');
+
+  const multiplier = unit == 'mi' ? 0.000621371192 : 0.001;
+
+  if (!latitude || !longitude) {
+    next(
+      new AppError(
+        'Pleasse provide latitude and longitude in format: latitude,longitude => e.g. -40.1231232,45.4324423',
+        400,
+      ),
+    );
+  }
+
+  const distances = await Tour.aggregate([
+    {
+      $geoNear: {
+        //must be called first, must have indexes which we connect to
+        near: {
+          type: 'Point',
+          coordinates: [longitude * 1, latitude * 1],
+        },
+        distanceField: 'distance', //field in which all find results will be stored
+        distanceMultiplier: multiplier,
+      },
+    },
+    {
+      $project: {
+        //select only specific fields
+        distance: 1,
+        name: 1,
+      },
+    },
+  ]);
+
+  // /.parseFloat();
+  res.status(200).json({
+    status: 'success',
+    data: distances,
+  });
+});
